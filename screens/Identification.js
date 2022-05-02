@@ -9,13 +9,11 @@ import {
 } from "react-native";
 
 import app from "../app.json";
-import data from "../assets/data.json";
-import ColorContext from "../ColorContext";
+import { dataMembers }from "../assets/data.js";
 import Button from "../components/Button";
-import Greetings from "../components/Greetings";
+import Avatar from "../components/Avatar";
 
 function Identification({ navigation }) {
-  const [, setColor] = useContext(ColorContext);
   const [value, setValue] = useState("");
   const [member, setMember] = useState(null);
   const [error, setError] = useState(false);
@@ -30,19 +28,15 @@ function Identification({ navigation }) {
   };
   const onPress = () => {
     if (value.length > 0) {
-      const found = data.members.find(({ lastname, firstname }) =>
-        value.match(
-          new RegExp(
-            `(${firstname} ${lastname})|(${lastname} ${firstname})`,
-            "i"
-          )
-        )
-      );
-      setMember(found);
-      setError(!found);
-      if (found) {
-        setColor(found.favoriteColor);
-      }
+      const loggedUser = dataMembers.members.filter(
+        ({ firstname, lastname }) =>
+          value.toLocaleLowerCase() ===
+            `${firstname} ${lastname}`.toLocaleLowerCase() ||
+          value.toLocaleLowerCase() ===
+            `${lastname} ${firstname}`.toLocaleLowerCase()
+      )[0];
+      setMember(loggedUser);
+      setError(!loggedUser);
     }
   };
   const onNavigateToHome = () => {
@@ -55,13 +49,21 @@ function Identification({ navigation }) {
     </View>
   );
   if (member) {
+    global.customColor = member.favoriteColor;
+    global.name = `${member.firstname} ${member.lastname}`
     return (
       <View style={styles.root}>
         {header}
         <View style={styles.content}>
-          <Greetings {...member} />
+          <Avatar
+            label={`${member.firstname[0].toLocaleUpperCase()}${member.lastname[0].toLocaleUpperCase()}`}
+            color={global.customColor}
+          />
+          <Text>
+            Welcome {member.firstname} {member.lastname} !
+          </Text>
           <View style={styles.actions}>
-            <Button title="Aller à l'accueil" onPress={onNavigateToHome} />
+            <Button title="Go to Home" onPress={onNavigateToHome} />
           </View>
         </View>
       </View>
@@ -79,7 +81,7 @@ function Identification({ navigation }) {
               value={value}
               onChangeText={onChange}
             />
-            <Text style={styles.error}>Désolé, tu n'es pas enregistré·e.</Text>
+            <Text style={styles.error}>Wrong credentials.</Text>
           </View>
           <View style={styles.actions}>
             <Button title="S'enregistrer" />
